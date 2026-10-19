@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pulse · Habits & Gym</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{ink:'#14161a',card:'#1c1f26',card2:'#232733',line:'#2c3140',neon:'#37f5a0',cy:'#22d3ee'},fontFamily:{sans:['Sora','system-ui','sans-serif']}}}}
+</script>
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<style>
+html{background:#14161a}body{color:#e7eaf0}
+body{font-family:Sora,system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+.num{font-variant-numeric:tabular-nums}
+:root{--g1:55,245,160;--g2:34,211,238}
+.orb{position:absolute;border-radius:9999px;filter:blur(90px);transition:background-color 1.4s ease}
+#amb{transition:opacity 1.2s ease}
+.eq{display:flex;gap:2px;align-items:flex-end;height:12px}
+.eq i{width:3px;height:3px;border-radius:2px;background:rgb(var(--g1));animation:eq .9s ease-in-out infinite}
+.eq i:nth-child(2){animation-delay:.2s}.eq i:nth-child(3){animation-delay:.4s}
+@keyframes eq{0%,100%{height:3px}50%{height:12px}}
+.glass{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01));border:1px solid #2c3140;backdrop-filter:blur(8px)}
+.hc{width:100%;aspect-ratio:1;border-radius:4px;background:#232733;transition:transform .15s}
+.hc:hover{transform:scale(1.35);outline:1px solid #37f5a0}
+.h1{background:rgba(55,245,160,.22)}.h2{background:rgba(55,245,160,.45)}.h3{background:rgba(55,245,160,.7)}.h4{background:#37f5a0;box-shadow:0 0 8px rgba(55,245,160,.5)}
+.pop{animation:pop .35s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{0%{transform:scale(.85)}100%{transform:scale(1)}}
+.rise{animation:rise .35s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.bar{background:linear-gradient(90deg,#37f5a0,#22d3ee);transition:width .6s cubic-bezier(.2,.8,.2,1)}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+input[type=number]{-moz-appearance:textfield}
+.fld{background:#14161a;border:1px solid #2c3140;border-radius:10px;padding:.5rem .6rem;text-align:center;width:100%;outline:none;transition:border-color .15s,box-shadow .15s}
+.fld:focus{border-color:#22d3ee;box-shadow:0 0 0 3px rgba(34,211,238,.15)}
+button{transition:all .18s ease}
+button:active{transform:scale(.96)}
+button:focus-visible,input:focus-visible{outline:2px solid #22d3ee;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body class="min-h-screen">
+<div id="amb" aria-hidden="true" class="fixed inset-0 -z-10 overflow-hidden pointer-events-none" style="opacity:0"><div class="orb" style="width:520px;height:520px;top:-140px;right:-120px;background-color:rgb(var(--g1));opacity:.32"></div><div class="orb" style="width:460px;height:460px;bottom:-160px;left:20%;background-color:rgb(var(--g2));opacity:.22"></div></div>
+<div class="md:flex min-h-screen">
+  <aside class="hidden md:flex md:flex-col w-60 shrink-0 p-5 border-r border-line sticky top-0 h-screen">
+    <div class="flex items-center gap-2 mb-10"><div class="w-9 h-9 rounded-xl bg-neon text-ink grid place-items-center"><i data-lucide="activity" class="w-5 h-5"></i></div><span class="font-extrabold text-lg tracking-tight">Pulse</span></div>
+    <nav class="space-y-1" id="sidenav"></nav>
+    <p class="mt-auto text-xs text-slate-500">Your data stays on your device.</p>
+  </aside>
+
+  <main class="flex-1 min-w-0 px-4 md:px-10 py-6 pb-28 md:pb-10 max-w-6xl">
+    <header class="mb-8" id="head"></header>
+    <section id="v-habits"></section>
+    <section id="v-gym" class="hidden">
+      <div class="grid lg:grid-cols-[1fr_320px] gap-6">
+        <div id="gymMain"></div>
+        <aside class="space-y-6 lg:sticky lg:top-6 self-start">
+          <div id="timer" class="glass rounded-3xl p-5"></div>
+          <div id="music" class="glass rounded-3xl p-5"><h3 class="font-bold flex items-center gap-2 mb-3"><i data-lucide="music" class="w-4 h-4 text-neon"></i>Your workout soundtrack</h3><div class="flex flex-col"><div id="mConn" class="mb-4"></div><div id="mEmbed"></div></div></div>
+          <div id="recent"></div>
+        </aside>
+      </div>
+    </section>
+  </main>
+</div>
+
+<nav class="md:hidden fixed bottom-0 inset-x-0 z-20 glass bg-ink/90 flex justify-around p-2" style="padding-bottom:max(.5rem,env(safe-area-inset-bottom))" id="botnav"></nav>
+
+<div id="modal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm grid place-items-center p-4"></div>
+<div id="toast" class="fixed left-1/2 -translate-x-1/2 bottom-24 md:bottom-8 z-50 px-4 py-2 w-max max-w-[90vw] text-center rounded-2xl bg-neon text-ink text-sm font-semibold opacity-0 pointer-events-none transition-opacity"></div>
+
+<script>
+(function(){
+var KEY="pulse-v1";
+var ICONS=["droplets","moon","brain","book-open","dumbbell","apple","footprints","coffee","sun","heart","pencil","bike"];
+function uid(){return Math.random().toString(36).slice(2,9)}
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function def(){return{
+ habits:[{id:uid(),n:"Drink 2L water",i:"droplets"},{id:uid(),n:"Sleep 8 hours",i:"moon"},{id:uid(),n:"Meditate 10 min",i:"brain"},{id:uid(),n:"Read 20 pages",i:"book-open"}],
+ log:{},
+ splits:[
+  {id:"push",n:"Push",ex:[ex("Bench press",3,8,60),ex("Overhead press",3,8,35),ex("Triceps pushdown",3,12,25)]},
+  {id:"pull",n:"Pull",ex:[ex("Barbell row",3,8,50),ex("Lat pulldown",3,10,45),ex("Biceps curl",3,12,12)]},
+  {id:"legs",n:"Legs",ex:[ex("Back squat",4,6,70),ex("Romanian deadlift",3,8,60),ex("Leg press",3,12,100)]}],
+ cs:"push",wk:[],auto:true,rest:90};}
+function ex(n,s,r,w){var a=[];for(var i=0;i<s;i++)a.push({r:r,w:w,d:false});return{id:uid(),n:n,sets:a}}
+var S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!S||!S.habits)S=def();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function iso(d){var m=d.getMonth()+1,x=d.getDate();return d.getFullYear()+"-"+(m<10?"0":"")+m+"-"+(x<10?"0":"")+x}
+function back(n){var d=new Date();d.setDate(d.getDate()-n);return iso(d)}
+var TODAY=back(0),tab="habits";
+
+/* ---------- derived ---------- */
+function doneToday(){return(S.log[TODAY]||[]).filter(function(id){return S.habits.some(function(h){return h.id===id})})}
+function ratio(d){var t=S.habits.length;if(!t)return 0;return(S.log[d]||[]).filter(function(id){return S.habits.some(function(h){return h.id===id})}).length/t}
+function streakAll(){var n=0,i=ratio(TODAY)>0?0:1;while(ratio(back(i))>0){n++;i++}return n}
+function habitStreak(id){var n=0,i=(S.log[TODAY]||[]).indexOf(id)>-1?0:1;while((S.log[back(i)]||[]).indexOf(id)>-1){n++;i++}return n}
+function weekStart(){var d=new Date();var k=(d.getDay()+6)%7;d.setDate(d.getDate()-k);return iso(d)}
+function weekWorkouts(){var w=weekStart();return S.wk.filter(function(x){return x.d>=w}).length}
+
+/* ---------- header / nav ---------- */
+var TABS=[["habits","Daily habits","check-circle-2"],["gym","Gym log","dumbbell"]];
+function nav(){
+  document.getElementById("sidenav").innerHTML=TABS.map(function(t){var on=tab===t[0];
+    return '<button data-a="tab" data-t="'+t[0]+'" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold '+(on?'bg-card2 text-neon':'text-slate-400 hover:text-white hover:bg-card')+'"><i data-lucide="'+t[2]+'" class="w-4 h-4"></i>'+t[1]+'</button>'}).join("");
+  document.getElementById("botnav").innerHTML=TABS.map(function(t){var on=tab===t[0];
+    return '<button data-a="tab" data-t="'+t[0]+'" class="flex-1 flex flex-col items-center gap-1 py-2 rounded-xl text-xs font-semibold '+(on?'text-neon bg-card2':'text-slate-400')+'"><i data-lucide="'+t[2]+'" class="w-5 h-5"></i>'+t[1]+'</button>'}).join("");
+}
+function head(){
+  var tot=S.habits.length,dn=doneToday().length,pct=tot?Math.round(dn/tot*100):0;
+  var d=new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
+  var hr=new Date().getHours(),gr=hr<12?"Good morning":hr<19?"Good afternoon":"Good evening",nm=S.name?", "+esc(S.name):"";
+  var msg=!tot?"Let’s add your first habit. Something small is perfect.":pct===100?"Everything’s checked off. Go enjoy that feeling.":pct>=50?"More than halfway there. You’re doing great.":pct>0?"Good start. One more and you’re rolling.":"Nothing checked yet. What’s the easiest one to start with?";
+  document.getElementById("head").innerHTML=
+  '<div class="flex flex-wrap items-end justify-between gap-4"><div><p class="text-sm text-slate-400">'+d+'</p><h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mt-1">'+gr+nm+'.</h1><p class="text-slate-300 mt-2 max-w-md">'+msg+'</p></div>'+
+  '<div class="flex gap-3"><div class="glass rounded-2xl px-4 py-3 flex items-center gap-3"><i data-lucide="flame" class="w-5 h-5 text-orange-400"></i><div><div class="num text-xl font-bold leading-none">'+streakAll()+'</div><div class="text-xs text-slate-400 mt-1">day streak</div></div></div>'+
+  '<div class="glass rounded-2xl px-4 py-3 flex items-center gap-3"><i data-lucide="dumbbell" class="w-5 h-5 text-cy"></i><div><div class="num text-xl font-bold leading-none">'+weekWorkouts()+'</div><div class="text-xs text-slate-400 mt-1">workouts this week</div></div></div></div></div>'+
+  '<div class="mt-6"><div class="flex justify-between text-xs text-slate-400 mb-2"><span>How today’s going</span><span class="num text-neon font-semibold">'+dn+' / '+tot+' · '+pct+'%</span></div><div class="h-3 rounded-full bg-card2 overflow-hidden"><div class="bar h-full rounded-full" style="width:'+pct+'%"></div></div></div>';
+}
+
+/* ---------- habits ---------- */
+function habits(){
+  var done=doneToday();
+  var cards=S.habits.map(function(h){var on=done.indexOf(h.id)>-1,st=habitStreak(h.id);
+    return '<div class="relative group rise"><button data-a="hab" data-id="'+h.id+'" aria-pressed="'+on+'" class="w-full text-left rounded-3xl p-5 border '+(on?'bg-neon/10 border-neon/50 shadow-[0_0_30px_-8px_rgba(55,245,160,.5)]':'glass hover:border-slate-500 hover:-translate-y-0.5')+'">'+
+    '<div class="flex items-start justify-between"><div class="w-11 h-11 rounded-2xl grid place-items-center '+(on?'bg-neon text-ink pop':'bg-card2 text-slate-300')+'"><i data-lucide="'+h.i+'" class="w-5 h-5"></i></div>'+
+    '<div class="w-7 h-7 rounded-full border-2 grid place-items-center '+(on?'bg-neon border-neon text-ink pop':'border-line text-transparent')+'"><i data-lucide="check" class="w-4 h-4"></i></div></div>'+
+    '<div class="mt-5 font-semibold '+(on?'text-white':'text-slate-200')+'">'+esc(h.n)+'</div>'+
+    '<div class="text-xs mt-1 flex items-center gap-1 '+(st?'text-orange-400':'text-slate-500')+'"><i data-lucide="flame" class="w-3 h-3"></i>'+(st?st+(st===1?' day':' days')+' in a row':'Day one starts today')+'</div></button>'+
+    '<button data-a="hdel" data-id="'+h.id+'" aria-label="Delete habit" class="absolute top-3 right-12 p-1.5 rounded-lg text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 focus:opacity-100"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>'}).join("");
+  var cells="",start=new Date();start.setDate(start.getDate()-((start.getDay()+6)%7)-7*19);
+  for(var i=0;i<140;i++){var d=new Date(start);d.setDate(start.getDate()+i);var k=iso(d);
+    if(k>TODAY){cells+='<div></div>';continue}
+    var r=ratio(k),l=r===0?0:r<.34?1:r<.67?2:r<1?3:4;
+    cells+='<div class="hc h'+l+'" title="'+k+' · '+Math.round(r*100)+'%"></div>'}
+  var days=0;for(var j=0;j<140;j++)if(ratio(back(j))>0)days++;
+  document.getElementById("v-habits").innerHTML=
+  '<div class="flex items-center justify-between mb-4"><h2 class="text-xl font-bold">Your habits today</h2><button data-a="hadd" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-neon text-ink text-sm font-bold hover:brightness-110"><i data-lucide="plus" class="w-4 h-4"></i>Add one</button></div>'+
+  (S.habits.length?'<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">'+cards+'</div>':'<div class="glass rounded-3xl p-10 text-center text-slate-400">Nothing here yet. Pick one small thing you’d like to do every day. Drinking water totally counts.</div>')+
+  '<div class="glass rounded-3xl p-5 md:p-6 mt-8"><div class="flex flex-wrap items-center justify-between gap-2 mb-4"><div><h2 class="text-lg font-bold">Your last 20 weeks</h2><p class="text-xs text-slate-400">You’ve shown up on '+days+' days so far. Every green square is a win.</p></div>'+
+  '<div class="flex items-center gap-1.5 text-xs text-slate-400">Less <span class="w-3 h-3 rounded hc"></span><span class="w-3 h-3 rounded h1"></span><span class="w-3 h-3 rounded h2"></span><span class="w-3 h-3 rounded h3"></span><span class="w-3 h-3 rounded h4"></span> More</div></div>'+
+  '<div class="overflow-x-auto"><div class="grid grid-flow-col grid-rows-7 gap-1 min-w-[420px]" style="grid-template-columns:repeat(20,minmax(0,1fr))">'+cells+'</div></div></div>';
+}
+
+/* ---------- gym ---------- */
+function curSplit(){return S.splits.filter(function(s){return s.id===S.cs})[0]||S.splits[0]}
+function gym(){
+  var sp=curSplit(),h="";
+  h+='<div class="flex flex-wrap items-center gap-2 mb-5">'+S.splits.map(function(s){var on=sp&&s.id===sp.id;
+    return '<button data-a="split" data-id="'+s.id+'" class="px-4 py-2 rounded-xl text-sm font-semibold '+(on?'bg-cy text-ink':'glass text-slate-300 hover:text-white')+'">'+esc(s.n)+'</button>'}).join("")+
+    '<button data-a="sadd" class="p-2 rounded-xl glass text-slate-300 hover:text-neon" aria-label="Add split"><i data-lucide="plus" class="w-4 h-4"></i></button>'+
+    (sp?'<button data-a="sdel" class="ml-auto p-2 rounded-xl text-slate-500 hover:text-red-400" aria-label="Delete split"><i data-lucide="trash-2" class="w-4 h-4"></i></button>':'')+'</div>';
+  if(!sp){document.getElementById("gymMain").innerHTML=h+'<div class="glass rounded-3xl p-10 text-center text-slate-400">No routine yet. Create a split, like Push, Pull and Legs, or whatever suits you.</div>';return}
+  var vol=0,sets=0;
+  sp.ex.forEach(function(e){e.sets.forEach(function(s){if(s.d){sets++;vol+=(+s.w||0)*(+s.r||0)}})});
+  h+=sp.ex.map(function(e){return '<div class="glass rounded-3xl p-4 md:p-5 mb-4 rise"><div class="flex items-center justify-between mb-3"><h3 class="font-bold">'+esc(e.n)+'</h3><button data-a="edel" data-e="'+e.id+'" class="p-1.5 text-slate-500 hover:text-red-400" aria-label="Remove exercise"><i data-lucide="x" class="w-4 h-4"></i></button></div>'+
+    '<div class="grid grid-cols-[2rem_1fr_1fr_2.5rem_1.5rem] gap-2 text-[11px] text-slate-500 mb-1 px-1"><span>Set</span><span class="text-center">kg</span><span class="text-center">Reps</span><span></span><span></span></div>'+
+    e.sets.map(function(s,i){return '<div class="grid grid-cols-[2rem_1fr_1fr_2.5rem_1.5rem] gap-2 items-center mb-2 '+(s.d?'opacity-60':'')+'"><span class="num text-sm text-slate-400 pl-1">'+(i+1)+'</span>'+
+      '<input class="fld num" type="number" inputmode="decimal" min="0" step="0.5" value="'+s.w+'" data-in="w" data-e="'+e.id+'" data-i="'+i+'" aria-label="Weight">'+
+      '<input class="fld num" type="number" inputmode="numeric" min="0" value="'+s.r+'" data-in="r" data-e="'+e.id+'" data-i="'+i+'" aria-label="Reps">'+
+      '<button data-a="sd" data-e="'+e.id+'" data-i="'+i+'" aria-label="Mark set done" aria-pressed="'+s.d+'" class="h-10 w-10 rounded-xl border grid place-items-center '+(s.d?'bg-neon border-neon text-ink pop':'border-line text-slate-500 hover:border-neon hover:text-neon')+'"><i data-lucide="check" class="w-4 h-4"></i></button>'+
+      '<button data-a="srm" data-e="'+e.id+'" data-i="'+i+'" aria-label="Remove set" class="text-slate-600 hover:text-red-400"><i data-lucide="minus" class="w-4 h-4"></i></button></div>'}).join("")+
+    '<button data-a="sadd1" data-e="'+e.id+'" class="mt-1 text-xs font-semibold text-cy hover:text-white flex items-center gap-1"><i data-lucide="plus" class="w-3 h-3"></i>Add set</button></div>'}).join("");
+  h+='<div class="flex flex-wrap gap-3"><button data-a="eadd" class="flex items-center gap-2 px-4 py-3 rounded-xl glass text-sm font-semibold hover:text-neon"><i data-lucide="plus" class="w-4 h-4"></i>Add exercise</button>'+
+     '<button data-a="fin" class="flex-1 min-w-[200px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-neon text-ink text-sm font-bold hover:brightness-110"><i data-lucide="flag" class="w-4 h-4"></i>Finish workout · <span class="num">'+sets+' sets · '+vol+' kg</span></button></div>';
+  document.getElementById("gymMain").innerHTML=h;
+}
+function recent(){
+  var l=S.wk.slice(-4).reverse();
+  document.getElementById("recent").innerHTML='<h3 class="font-bold mb-3">Your recent sessions</h3>'+(l.length?l.map(function(w){
+    return '<div class="glass rounded-2xl px-4 py-3 mb-2 flex items-center justify-between"><div><div class="font-semibold text-sm">'+esc(w.s)+'</div><div class="text-xs text-slate-400">'+w.d+'</div></div><div class="text-right num text-xs text-slate-300">'+w.sets+' sets<br><span class="text-cy">'+w.vol+' kg</span></div></div>'}).join(""):'<p class="text-sm text-slate-500">Your finished workouts will show up here. Go lift something heavy.</p>');
+}
+
+/* ---------- rest timer ---------- */
+var C=2*Math.PI*54,T={left:S.rest||90,run:false,iv:null};
+function timerShell(){
+  document.getElementById("timer").innerHTML=
+  '<div class="flex items-center justify-between mb-4"><h3 class="font-bold flex items-center gap-2"><i data-lucide="timer" class="w-4 h-4 text-cy"></i>Rest timer</h3>'+
+  '<button data-a="auto" id="autoBtn" class="text-xs px-2.5 py-1 rounded-full border"></button></div>'+
+  '<div class="relative w-40 h-40 mx-auto"><svg viewBox="0 0 120 120" class="-rotate-90 w-full h-full"><circle cx="60" cy="60" r="54" fill="none" stroke="#2c3140" stroke-width="8"/><circle id="ring" cx="60" cy="60" r="54" fill="none" stroke="#22d3ee" stroke-width="8" stroke-linecap="round" stroke-dasharray="'+C+'" style="transition:stroke-dashoffset 1s linear;filter:drop-shadow(0 0 6px rgba(34,211,238,.6))"/></svg>'+
+  '<div class="absolute inset-0 grid place-items-center"><span id="tt" class="num text-4xl font-extrabold"></span></div></div>'+
+  '<div class="grid grid-cols-4 gap-2 mt-5">'+[30,60,90,120].map(function(v){return '<button data-a="tpre" data-v="'+v+'" class="pre py-2 rounded-lg text-xs font-semibold border border-line text-slate-300 hover:border-cy" data-pv="'+v+'">'+v+'s</button>'}).join("")+'</div>'+
+  '<div class="flex gap-2 mt-3"><button data-a="tgo" id="goBtn" class="flex-1 py-2.5 rounded-xl bg-cy text-ink text-sm font-bold"></button><button data-a="trs" class="px-4 rounded-xl border border-line text-slate-300 hover:text-white" aria-label="Reset"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button></div>';
+  tUI();
+}
+function tUI(){
+  var m=Math.floor(T.left/60),s=T.left%60,tot=S.rest||90;
+  document.getElementById("tt").textContent=m+":"+(s<10?"0":"")+s;
+  document.getElementById("ring").style.strokeDashoffset=C*(1-T.left/tot);
+  document.getElementById("goBtn").textContent=T.run?"Pause":"Start";
+  var a=document.getElementById("autoBtn");a.textContent=S.auto?"Auto-start on":"Auto-start off";a.className="text-xs px-2.5 py-1 rounded-full border "+(S.auto?"border-neon text-neon":"border-line text-slate-500");
+  document.querySelectorAll(".pre").forEach(function(b){var on=+b.dataset.pv===(S.rest||90);b.className="pre py-2 rounded-lg text-xs font-semibold border "+(on?"border-cy text-cy bg-cy/10":"border-line text-slate-300 hover:border-cy")});
+}
+function tStop(){clearInterval(T.iv);T.run=false}
+function tStart(){tStop();if(T.left<=0)T.left=S.rest||90;T.run=true;duckStart();T.iv=setInterval(function(){T.left--;if(T.left<=0){T.left=0;tStop();beep();duckEnd();toast("Rest’s up. Whenever you’re ready.")}tUI()},1000);tUI()}
+function beep(){try{var a=new(window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=880;g.gain.setValueAtTime(.2,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.8);o.start();o.stop(a.currentTime+.8);if(navigator.vibrate)navigator.vibrate([200,100,200])}catch(e){}}
+
+/* ---------- ui helpers ---------- */
+var tt;function toast(m,ms){var t=document.getElementById("toast");t.textContent=m;t.style.opacity=1;clearTimeout(tt);tt=setTimeout(function(){t.style.opacity=0},ms||2200)}
+function modal(o){
+  var m=document.getElementById("modal"),pick=ICONS[0];
+  m.innerHTML='<div class="glass bg-card rounded-3xl p-6 w-full max-w-sm rise" role="dialog" aria-modal="true"><h3 class="text-lg font-bold mb-4">'+o.title+'</h3>'+
+  '<input id="mi" class="fld !text-left !py-3" maxlength="200" placeholder="'+o.ph+'" aria-label="'+o.ph+'">'+
+  (o.icons?'<div class="grid grid-cols-6 gap-2 mt-4">'+ICONS.map(function(i,k){return '<button type="button" data-ic="'+i+'" class="ic h-10 rounded-xl border grid place-items-center '+(k?'border-line text-slate-400':'border-neon text-neon bg-neon/10')+'"><i data-lucide="'+i+'" class="w-4 h-4"></i></button>'}).join("")+'</div>':'')+
+  '<div class="flex gap-2 mt-5"><button id="mc" class="flex-1 py-2.5 rounded-xl border border-line text-slate-300">Cancel</button><button id="mo" class="flex-1 py-2.5 rounded-xl bg-neon text-ink font-bold">'+o.ok+'</button></div></div>';
+  m.classList.remove("hidden");lucide.createIcons();
+  var i=document.getElementById("mi");i.focus();
+  function close(){m.classList.add("hidden");m.innerHTML=""}
+  function go(){var v=i.value.trim();if(!v)return;close();o.fn(v,pick)}
+  document.getElementById("mc").onclick=close;document.getElementById("mo").onclick=go;
+  i.onkeydown=function(e){if(e.key==="Enter")go();if(e.key==="Escape")close()};
+  m.onclick=function(e){if(e.target===m)close();var b=e.target.closest(".ic");if(b){pick=b.dataset.ic;m.querySelectorAll(".ic").forEach(function(x){x.className="ic h-10 rounded-xl border grid place-items-center "+(x===b?"border-neon text-neon bg-neon/10":"border-line text-slate-400")})}};
+}
+
+/* ---------- spotify ---------- */
+var SPK="pulse-sp",RURI=location.origin+location.pathname,NP=null,PL=null,lastEmb="";
+function spGet(){try{return JSON.parse(localStorage.getItem(SPK))||{}}catch(e){return{}}}
+function spSet(o){try{localStorage.setItem(SPK,JSON.stringify(o))}catch(e){}}
+function b64(buf){return btoa(String.fromCharCode.apply(null,new Uint8Array(buf))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}
+function parseSp(v){var m=v.match(/(?:open\.spotify\.com\/(?:intl-[a-z]+\/)?|spotify:)(playlist|album|track|artist|episode|show)[\/:]([A-Za-z0-9]{10,})/);return m?{t:m[1],id:m[2]}:null}
+function embed(){
+  var c=curSplit(),l=c&&c.link,key=l?l.t+l.id:"none"+(c?c.id:"");
+  if(key===lastEmb)return;lastEmb=key;
+  document.getElementById("mEmbed").innerHTML=l?'<iframe title="Spotify player" src="https://open.spotify.com/embed/'+l.t+'/'+l.id+'?theme=0" width="100%" height="152" style="border:0;border-radius:14px" allow="autoplay; clipboard-write; encrypted-media; fullscreen" loading="lazy"></iframe><div class="flex gap-4 mt-2 text-xs"><button data-a="spadd" class="text-cy hover:text-white">Change</button><button data-a="sprm" class="text-slate-500 hover:text-red-400">Remove</button></div>'
+   :'<p class="text-sm text-slate-400 mb-3">Paste a playlist, album or song link and it’ll play right here for this routine.</p><button data-a="spadd" class="w-full py-2.5 rounded-xl border border-line text-sm font-semibold hover:border-neon hover:text-neon">Add a Spotify link</button>';
+}
+var lastConn="",GL="";
+function mmss(ms){var s=Math.max(0,Math.floor(ms/1000));return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+function dm(){return S.duck||"lower"}
+function ambUpdate(){var a=document.getElementById("amb");if(a)a.style.opacity=(tab==="gym"&&NP&&NP.item&&NP.is_playing)?1:0}
+function artColors(url){
+  return new Promise(function(res){
+    var im=new Image();im.crossOrigin="anonymous";
+    im.onload=function(){try{
+      var c=document.createElement("canvas");c.width=c.height=24;var x=c.getContext("2d");x.drawImage(im,0,0,24,24);
+      var d=x.getImageData(0,0,24,24).data,B={};
+      for(var i=0;i<d.length;i+=4){var r=d[i],g=d[i+1],b=d[i+2],mx=Math.max(r,g,b),mn=Math.min(r,g,b);
+        if(mx<50||(mx-mn)/mx<.25)continue;
+        var k=(r>>6)+","+(g>>6)+","+(b>>6),o=B[k]||(B[k]={n:0,r:0,g:0,b:0});o.n++;o.r+=r;o.g+=g;o.b+=b}
+      var arr=Object.keys(B).map(function(k){return B[k]}).sort(function(a,b){return b.n-a.n});
+      function avg(o){var v=[o.r/o.n,o.g/o.n,o.b/o.n],m=Math.max(v[0],v[1],v[2]),f=m<170?170/m:1;return v.map(function(q){return Math.min(255,Math.round(q*f))})}
+      res(arr.length?[avg(arr[0]),avg(arr[1]||arr[0])]:null)
+    }catch(e){res(null)}};
+    im.onerror=function(){res(null)};im.src=url;
+  });
+}
+function glowFrom(url){
+  if(!url||url===GL)return;GL=url;
+  artColors(url).then(function(cs){var d=cs||[[55,245,160],[34,211,238]],st=document.documentElement.style;
+    st.setProperty("--g1",d[0].join(","));st.setProperty("--g2",d[1].join(","))});
+}
+function connUI(){
+  var el=document.getElementById("mConn"),s=spGet();ambUpdate();
+  if(!s.at){lastConn="";el.innerHTML='<button data-a="spcon" class="w-full py-2.5 rounded-xl bg-neon text-ink text-sm font-bold flex items-center justify-center gap-2 hover:brightness-110"><i data-lucide="link" class="w-4 h-4"></i>Connect your Spotify</button><p class="text-xs text-slate-500 mt-2">See what’s playing, skip tracks and auto-quiet the music while you rest.</p>';lucide.createIcons();return}
+  var it=NP&&NP.item,pl=!!(NP&&NP.is_playing),key=[it&&it.id,pl,DUCK.on,dm(),PL?PL.length:-1].join("|");
+  if(key===lastConn&&el.firstChild)return;lastConn=key;
+  var im=it?it.album.images:[],art=im.length?(im[1]||im[0]).url:"",
+      p=it?Math.min(NP.progress_ms+(pl?Date.now()-NP._t:0),it.duration_ms):0,pct=it?p/it.duration_ms*100:0,
+      bt="h-10 w-10 rounded-full border border-white/15 bg-black/20 grid place-items-center text-slate-200 hover:text-white hover:border-white/40";
+  el.innerHTML='<div class="relative overflow-hidden rounded-2xl border border-white/10 p-4" style="background:rgba(var(--g1),.08)">'+
+   '<div class="orb" style="width:150px;height:150px;top:-60px;right:-50px;background-color:rgb(var(--g1));opacity:.5;filter:blur(45px)"></div>'+
+   '<div class="orb" style="width:130px;height:130px;bottom:-60px;left:-40px;background-color:rgb(var(--g2));opacity:.35;filter:blur(45px)"></div>'+
+   '<div class="relative">'+
+   '<div class="flex items-center gap-2 text-[11px] text-slate-300 mb-3">'+(pl?'<span class="eq"><i></i><i></i><i></i></span>Now playing':'Paused')+'</div>'+
+   '<div class="flex items-center gap-3">'+(art?'<img src="'+esc(art)+'" alt="Album art" class="w-16 h-16 rounded-xl object-cover" style="box-shadow:0 12px 32px -8px rgba(var(--g1),.9)">':'<div class="w-16 h-16 rounded-xl bg-black/20 grid place-items-center"><i data-lucide="music-2" class="w-6 h-6 text-slate-400"></i></div>')+
+   '<div class="min-w-0 flex-1"><div class="font-bold truncate">'+(it?esc(it.name):"Nothing playing yet")+'</div><div class="text-xs text-slate-300 truncate">'+(it?esc(it.artists.map(function(a){return a.name}).join(", ")):"Hit play in Spotify and it’ll show up here.")+'</div></div></div>'+
+   '<div class="mt-4 h-1.5 rounded-full bg-white/10 overflow-hidden"><div id="npbar" class="h-full rounded-full" style="width:'+pct+'%;background:rgb(var(--g1))"></div></div>'+
+   '<div class="flex justify-between text-[10px] text-slate-400 mt-1 num"><span id="npcur">'+mmss(p)+'</span><span>'+(it?mmss(it.duration_ms):"0:00")+'</span></div>'+
+   '<div class="flex items-center justify-center gap-3 mt-2"><button data-a="spprev" class="'+bt+'" aria-label="Previous"><i data-lucide="skip-back" class="w-4 h-4"></i></button><button data-a="spplay" class="h-12 w-12 rounded-full bg-white text-ink grid place-items-center" aria-label="Play or pause"><i data-lucide="'+(pl?"pause":"play")+'" class="w-5 h-5"></i></button><button data-a="spnext" class="'+bt+'" aria-label="Next"><i data-lucide="skip-forward" class="w-4 h-4"></i></button></div>'+
+   (DUCK.on?'<div class="mt-3 text-center text-[11px] text-cy">'+(dm()==="pause"?"Music paused while you rest":"Volume lowered while you rest")+'</div>':'')+
+   '</div></div>'+
+  '<p class="text-xs text-slate-500 mt-4 mb-2">When the rest timer runs</p><div class="grid grid-cols-3 gap-1.5">'+[["lower","Lower volume"],["pause","Pause"],["off","Keep playing"]].map(function(o){var on=dm()===o[0];return '<button data-a="spduck" data-v="'+o[0]+'" aria-pressed="'+on+'" class="py-1.5 rounded-lg text-xs font-semibold border '+(on?'border-neon text-neon bg-neon/10':'border-line text-slate-400 hover:border-slate-500')+'">'+o[1]+'</button>'}).join("")+'</div>'+
+  (PL&&PL.length?'<p class="text-xs text-slate-500 mt-4 mb-2">Your playlists</p><div class="flex flex-wrap gap-1.5">'+PL.map(function(x){return '<button data-a="splpl" data-id="'+x.id+'" class="px-2.5 py-1 rounded-full border border-line text-xs text-slate-300 hover:border-neon hover:text-neon max-w-full truncate">'+esc(x.name)+'</button>'}).join("")+'</div>':"")+
+  '<button data-a="spout" class="mt-4 text-xs text-slate-500 hover:text-red-400">Disconnect Spotify</button>';
+  lucide.createIcons();glowFrom(art);
+}
+setInterval(function(){var b=document.getElementById("npbar");if(!b||!NP||!NP.item)return;
+  var p=Math.min(NP.progress_ms+(NP.is_playing?Date.now()-NP._t:0),NP.item.duration_ms);
+  b.style.width=(p/NP.item.duration_ms*100)+"%";var c=document.getElementById("npcur");if(c)c.textContent=mmss(p)},1000);
+async function tok(body){
+  var r=await fetch("https://accounts.spotify.com/api/token",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams(body)});
+  if(!r.ok)throw 0;var j=await r.json(),s=spGet();s.at=j.access_token;if(j.refresh_token)s.rt=j.refresh_token;s.exp=Date.now()+j.expires_in*1000-30000;spSet(s);
+}
+function spOut(){var s=spGet();delete s.at;delete s.rt;spSet(s);NP=null;PL=null;connUI();toast("Spotify disconnected. Reconnect anytime.")}
+async function api(p,m){
+  var s=spGet();if(!s.at)return null;
+  if(Date.now()>s.exp){try{await tok({grant_type:"refresh_token",refresh_token:s.rt,client_id:s.cid})}catch(e){spOut();return null}s=spGet()}
+  try{var r=await fetch("https://api.spotify.com/v1/"+p,{method:m||"GET",headers:{Authorization:"Bearer "+s.at}});
+    if(r.status===204)return{};if(r.status===401){spOut();return null}
+    if(r.status===403){toast("Playback controls need Spotify Premium");return null}
+    return r.ok?await r.json().catch(function(){return{}}):null}catch(e){return null}
+}
+async function spPoll(){
+  if(!spGet().at)return;
+  var j=await api("me/player/currently-playing");NP=j&&j.item?j:null;if(NP)NP._t=Date.now();
+  if(!PL){var p=await api("me/playlists?limit=8");PL=p&&p.items?p.items.filter(Boolean).map(function(x){return{id:x.id,name:x.name}}):[]}
+  connUI();
+}
+async function spLogin(cid){
+  var a=new Uint8Array(48);crypto.getRandomValues(a);var ver=b64(a);
+  var ch=b64(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(ver)));
+  var s=spGet();s.ver=ver;spSet(s);
+  location.href="https://accounts.spotify.com/authorize?"+new URLSearchParams({client_id:cid,response_type:"code",redirect_uri:RURI,code_challenge_method:"S256",code_challenge:ch,scope:"user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private"});
+}
+function spConnect(){
+  if(location.protocol==="file:"){toast("Spotify login needs this page served over https or http://127.0.0.1. The link player above works anywhere.",6500);return}
+  var s=spGet();if(s.cid){spLogin(s.cid);return}
+  modal({title:'Paste your Spotify Client ID<span class="block text-xs font-normal text-slate-400 mt-2 leading-relaxed">Create a free app at developer.spotify.com/dashboard and add <b class="text-slate-200 break-all">'+esc(RURI)+'</b> as a Redirect URI.</span>',ph:"Client ID",ok:"Connect",fn:function(v){var s2=spGet();s2.cid=v;spSet(s2);spLogin(v)}});
+}
+async function spBoot(){
+  var c=new URLSearchParams(location.search).get("code"),s=spGet();
+  if(c&&s.cid&&s.ver){
+    try{await tok({grant_type:"authorization_code",code:c,redirect_uri:RURI,client_id:s.cid,code_verifier:s.ver});tab="gym";render();toast("Spotify connected. Let’s get moving!")}
+    catch(e){toast("Couldn’t connect to Spotify. Double-check your Client ID and redirect URI.",5000)}
+    history.replaceState(null,"",RURI);
+  }
+  if(spGet().at){spPoll();setInterval(function(){if(tab==="gym"&&!document.hidden)spPoll()},8000)}
+}
+var DUCK={on:false,vol:null,paused:false,id:0},duckSeq=0;
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+function setVol(v){return api("me/player/volume?volume_percent="+Math.round(v),"PUT")}
+async function duckStart(){
+  if(!spGet().at||dm()==="off"||DUCK.on)return;
+  var me=++duckSeq;DUCK={on:true,vol:null,paused:false,id:me};
+  var j=await api("me/player");
+  if(DUCK.id!==me)return;
+  if(!j||!j.is_playing||!j.device){DUCK={on:false,vol:null,paused:false,id:++duckSeq};return}
+  var d=DUCK;
+  if(dm()==="pause"){d.paused=true;await api("me/player/pause","PUT")}
+  else{d.vol=j.device.volume_percent==null?80:j.device.volume_percent;
+    var ok=await setVol(Math.max(5,d.vol*.25));
+    if(!ok){d.vol=null;d.paused=true;await api("me/player/pause","PUT")}}
+  spPoll();
+}
+async function duckEnd(){
+  if(!DUCK.on)return;var was=DUCK;DUCK={on:false,vol:null,paused:false,id:++duckSeq};
+  if(was.paused)await api("me/player/play","PUT");
+  if(was.vol!=null){for(var k=1;k<=4;k++){await setVol(was.vol*.25+was.vol*.75*k/4);await sleep(250)}}
+  spPoll();
+}
+async function spAct(a,b){
+  if(a==="spcon"){spConnect();return}
+  if(a==="spout"){spOut();return}
+  if(a==="spduck"){S.duck=b.dataset.v;save();connUI();return}
+  var c=curSplit();
+  if(a==="spadd"||a==="splpl"||a==="sprm"){
+    if(!c){toast("Create a routine first, then pick its music");return}
+    if(a==="sprm"){delete c.link}
+    else if(a==="splpl"){c.link={t:"playlist",id:b.dataset.id}}
+    else{modal({title:"What music fuels this routine?",ph:"Paste a Spotify link",ok:"Save",fn:function(v){var p=parseSp(v);if(!p){toast("That doesn’t look like a Spotify link");return}c.link=p;save();lastEmb="";embed()}});return}
+    save();lastEmb="";embed();return;
+  }
+  var cmd=a==="spprev"?["me/player/previous","POST"]:a==="spnext"?["me/player/next","POST"]:(NP&&NP.is_playing)?["me/player/pause","PUT"]:["me/player/play","PUT"];
+  await api(cmd[0],cmd[1]);setTimeout(spPoll,700);
+}
+
+/* ---------- render ---------- */
+function render(){
+  nav();head();
+  document.getElementById("v-habits").classList.toggle("hidden",tab!=="habits");
+  document.getElementById("v-gym").classList.toggle("hidden",tab!=="gym");
+  if(tab==="habits")habits();else{gym();recent();tUI();embed();connUI()}
+  ambUpdate();
+  lucide.createIcons();
+}
+function ex1(id){var r=null;curSplit().ex.forEach(function(e){if(e.id===id)r=e});return r}
+
+document.addEventListener("click",function(e){
+  var b=e.target.closest("[data-a]");if(!b)return;var a=b.dataset.a,id=b.dataset.id;
+  if(a==="tab"){tab=b.dataset.t;render();return}
+  if(a==="hab"){var l=S.log[TODAY]=S.log[TODAY]||[],k=l.indexOf(id);if(k>-1)l.splice(k,1);else{l.push(id);toast(pick(["Nice one!","Another one down.","That’s the spirit.","Look at you go.","Small steps, big results."]))}save();render();return}
+  if(a==="hadd"){modal({title:"What do you want to do every day?",ph:"e.g. Stretch for 10 minutes",ok:"Add habit",icons:true,fn:function(v,ic){S.habits.push({id:uid(),n:v,i:ic});save();render()}});return}
+  if(a==="hdel"){if(confirm("Delete this habit?")){S.habits=S.habits.filter(function(h){return h.id!==id});save();render()}return}
+  if(a==="split"){S.cs=id;save();render();return}
+  if(a==="sadd"){modal({title:"What do you want to call this routine?",ph:"e.g. Upper body",ok:"Create routine",fn:function(v){var s={id:uid(),n:v,ex:[]};S.splits.push(s);S.cs=s.id;save();render()}});return}
+  if(a==="sdel"){var c=curSplit();if(confirm("Delete the “"+c.n+"” split?")){S.splits=S.splits.filter(function(s){return s!==c});S.cs=S.splits[0]?S.splits[0].id:"";save();render()}return}
+  if(a==="eadd"){modal({title:"Add exercise",ph:"e.g. Incline press",ok:"Add exercise",fn:function(v){curSplit().ex.push(ex(v,3,10,20));save();render()}});return}
+  if(a==="edel"){var sp=curSplit();sp.ex=sp.ex.filter(function(x){return x.id!==b.dataset.e});save();render();return}
+  if(a==="sadd1"){var x=ex1(b.dataset.e),last=x.sets[x.sets.length-1]||{r:10,w:20};x.sets.push({r:last.r,w:last.w,d:false});save();render();return}
+  if(a==="srm"){var x2=ex1(b.dataset.e);x2.sets.splice(+b.dataset.i,1);save();render();return}
+  if(a==="sd"){var x3=ex1(b.dataset.e),s=x3.sets[+b.dataset.i];s.d=!s.d;save();render();if(s.d&&S.auto){T.left=S.rest||90;tStart()}return}
+  if(a==="fin"){var sp2=curSplit(),n=0,v=0;sp2.ex.forEach(function(x){x.sets.forEach(function(s){if(s.d){n++;v+=(+s.w||0)*(+s.r||0)}})});
+    if(!n){toast("Tick off a set first, then I’ll log it");return}
+    S.wk.push({d:TODAY,s:sp2.n,sets:n,vol:v});sp2.ex.forEach(function(x){x.sets.forEach(function(s){s.d=false})});save();render();toast(pick(["Workout saved. Proud of you.","Done and logged. Great session!","That’s in the books. Rest up."]));return}
+  if(a==="tpre"){S.rest=+b.dataset.v;T.left=S.rest;tStop();duckEnd();save();tUI();return}
+  if(a==="tgo"){if(T.run){tStop();duckEnd();tUI()}else tStart();return}
+  if(a==="trs"){tStop();duckEnd();T.left=S.rest||90;tUI();return}
+  if(a==="auto"){S.auto=!S.auto;save();tUI();return}
+  if(a.slice(0,2)==="sp")spAct(a,b);
+});
+document.addEventListener("input",function(e){
+  var t=e.target,k=t.dataset&&t.dataset.in;if(!k)return;
+  var x=ex1(t.dataset.e);if(x){x.sets[+t.dataset.i][k]=t.value===""?0:+t.value;save()}
+});
+
+timerShell();render();spBoot();
+if(S.name===undefined){S.name="";save();setTimeout(function(){modal({title:"First things first: what should I call you?",ph:"Your first name",ok:"Nice to meet you",fn:function(v){S.name=v;save();render()}})},500)}
+})();
+</script>
+</body>
+</html>
